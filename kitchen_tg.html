@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Кухня</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #111111;
+  --surface: #1a1a1a;
+  --surface2: #222222;
+  --border: rgba(255,255,255,0.07);
+  --border-mid: rgba(255,255,255,0.12);
+  --text: #efefef;
+  --text-sec: #666;
+  --text-muted: #3a3a3a;
+  --correct: #4ade80;
+  --radius: 13px;
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  overscroll-behavior: none;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 40px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* PROGRESS */
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 22px;
+  margin-bottom: 8px;
+}
+.top-label { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); font-weight: 500; }
+.prog-track { height: 1px; background: var(--border); margin-bottom: 22px; }
+.prog-fill { height: 100%; background: rgba(255,255,255,.22); transition: width .5s ease; }
+
+/* ORDER SLIP */
+.slip {
+  background: var(--surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.slip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(255,255,255,.1);
+}
+.slip-tag { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); font-weight: 500; }
+.slip-num { font-size: 11px; color: var(--text-muted); }
+.slip-q { font-size: 16px; font-weight: 600; color: var(--text); line-height: 1.45; letter-spacing: -.02em; }
+
+/* COUNTER */
+.counter-area { text-align: center; margin: 20px 0 16px; }
+.counter-num {
+  font-size: 58px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -.05em;
+  line-height: 1;
+  display: block;
+}
+.counter-num.bump { animation: bump .15s ease; }
+@keyframes bump { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+.counter-unit { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+
+/* BURGER GRID */
+.burger-grid {
+  min-height: 60px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: rgba(255,255,255,.02);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  transition: border-color .3s;
+}
+.b {
+  font-size: 20px;
+  display: inline-block;
+  animation: bpop .2s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes bpop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+
+/* SLIDER */
+.slider-wrap { margin-bottom: 8px; }
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.12);
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--text);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,.5);
+  transition: transform .12s;
+}
+input[type=range]::-webkit-slider-thumb:active { transform: scale(1.18); }
+input[type=range]::-moz-range-thumb {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--text);
+  border: none;
+  cursor: pointer;
+}
+.slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+/* BUTTONS */
+.primary-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--text);
+  color: #111;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: -.01em;
+  transition: opacity .12s, transform .1s;
+  margin-top: 8px;
+}
+.primary-btn:active { transform: scale(.98); opacity: .9; }
+.sec-btn {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+}
+
+/* RESULT SCREEN */
+.result-cols { display: flex; gap: 10px; margin-bottom: 14px; }
+.r-col {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
+.r-col.is-correct { border-color: var(--correct); background: rgba(74,222,128,.05); }
+.r-col-label { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.r-col.is-correct .r-col-label { color: var(--correct); }
+.r-num { font-size: 38px; font-weight: 700; color: var(--text); letter-spacing: -.04em; line-height: 1; margin-bottom: 6px; }
+.r-burgers { font-size: 14px; }
+
+.verdict-text { font-size: 14px; color: var(--text-sec); line-height: 1.65; margin-bottom: 14px; text-align: center; }
+.fact-box {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  padding: 13px 15px;
+  background: var(--surface);
+  border-radius: 12px;
+  border-left: 1px solid rgba(255,255,255,.2);
+  margin-bottom: 20px;
+  color: #888;
+}
+
+/* INTRO / FINAL */
+.screen { flex: 1; display: flex; flex-direction: column; padding-top: 40px; }
+.screen-eyebrow { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 22px; font-weight: 500; }
+.screen-emoji { font-size: 52px; margin-bottom: 18px; line-height: 1; }
+.screen-title { font-size: 24px; font-weight: 600; color: var(--text); letter-spacing: -.03em; line-height: 1.25; margin-bottom: 12px; }
+.screen-sub { font-size: 15px; color: var(--text-sec); line-height: 1.65; margin-bottom: auto; }
+
+.score-card {
+  background: var(--surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  margin: 28px 0;
+}
+.score-big { font-size: 52px; font-weight: 700; color: var(--text); letter-spacing: -.05em; line-height: 1; margin-bottom: 6px; }
+.score-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+.score-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.score-desc { font-size: 13px; color: var(--text-sec); line-height: 1.6; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.animate-in { animation: fadeUp .28s ease forwards; }
+</style>
+</head>
+<body>
+<div id="app"><div id="root"></div></div>
+<script>
+if (window.Telegram?.WebApp) {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+  Telegram.WebApp.setHeaderColor('#111111');
+  Telegram.WebApp.setBackgroundColor('#111111');
+}
+
+const questions = [
+  {
+    num: "01",
+    order: "Скільки разів видавці відмовили Джоан Роулінг перед тим, як вийшов «Гаррі Поттер»?",
+    answer: 12, min: 1, max: 25, unit: "відмов",
+    fact: "12 видавців відмовили Роулінг. Bloomsbury погодились лише після того, як восьмирічна донька голови видавництва вимагала продовження після перших розділів.",
+    v: { exact: "Точно! Шеф вражений 👨‍🍳", close: "Майже — одна порція туди-сюди. Непогано!", far: "Значно більше, ніж здається на перший погляд.", bad: "Навіть великі видавці помиляються. 12 разів — і все одно стала найпродаванішою серією в історії." }
+  },
+  {
+    num: "02",
+    order: "Скільки хвилин триває «Bohemian Rhapsody» Queen — перша пісня, яка порушила радіо-правило «не довше 3 хвилин»?",
+    answer: 6, min: 1, max: 15, unit: "хвилин",
+    fact: "5 хвилин 55 секунд. Радіостанції відмовлялись ставити пісню в ефір — поки DJ Кенні Еверетт не поставив її підряд 14 разів після шквалу прохань слухачів.",
+    v: { exact: "Шеф задоволений. Точно в крапку!", close: "Дуже близько. Ще хвилина — і рок-революція б не сталась.", far: "Менше, ніж думаєш. Але навіть 6 хвилин вистачило змінити музику.", bad: "Набагато менше! 6 хвилин — і радіо захлинулось від прохань." }
+  },
+  {
+    num: "03",
+    order: "Скільки «Оскарів» виграв «Форрест Гамп» у 1995 році?",
+    answer: 6, min: 1, max: 12, unit: "Оскарів",
+    fact: "6 статуеток, включно з «Найкращим фільмом» та «Найкращим режисером». І досі суперечка — чи заслужено він переміг «Пульп Фікшн» Тарантіно.",
+    v: { exact: "Life is like a box of chocolates 🍫 Точно!", close: "Майже! Один Оскар туди-сюди.", far: "Шеф не вірить. Насправді шість.", bad: "Шість! Хоча Тарантіно досі вважає, що «Пульп Фікшн» отримав їх незаслужено мало." }
+  },
+  {
+    num: "04",
+    order: "Скільки сезонів Breaking Bad?",
+    answer: 5, min: 1, max: 10, unit: "сезонів",
+    fact: "5 сезонів, 62 серії. 16 нагород Emmy і топ-5 серіалів усіх часів за версією IMDb. Вол Вайт перетворився на монстра рівно за стільки.",
+    v: { exact: "Say my name 😎 Правильно!", close: "Майже! Один зайвий або не вистачає.", far: "Не вгадав. П'ять — і цього вистачило.", bad: "П'ять. Хоча відчувається як двадцять — настільки щільно." }
+  },
+  {
+    num: "05",
+    order: "Скільки місяців Pixar розробляв «Тoy Story» до виходу в кіно?",
+    answer: 20, min: 3, max: 36, unit: "місяців",
+    fact: "20 місяців — майже 2 роки. У команди не було ні технологій, ні прецедентів. Перший повністю комп'ютерний повнометражний фільм в історії кіно.",
+    v: { exact: "Шеф плаче від щастя. Ідеально!", close: "Майже! Пара місяців туди-сюди.", far: "Довше або коротше — але так чи інакше це змінило кіно.", bad: "20 місяців! Без прецедентів, без інструментів — тільки ідея і дедлайн." }
+  }
+];
+
+let current = 0, score = 0;
+
+function pts(q, v) {
+  const d = Math.abs(v - q.answer), p = d / q.answer;
+  return d === 0 ? 3 : p <= .17 ? 2 : p <= .5 ? 1 : 0;
+}
+function verdict(q, v) {
+  const d = Math.abs(v - q.answer), p = d / q.answer;
+  return d === 0 ? q.v.exact : p <= .17 ? q.v.close : p <= .5 ? q.v.far : q.v.bad;
+}
+function burgerStr(n) {
+  if (n > 15) return `🍔 × ${n}`;
+  return '🍔'.repeat(n);
+}
+
+function setContent(html) {
+  const root = document.getElementById('root');
+  root.innerHTML = html;
+  root.classList.remove('animate-in');
+  void root.offsetWidth;
+  root.classList.add('animate-in');
+}
+
+function renderBurgers(n, el) {
+  el.innerHTML = '';
+  if (n === 0) {
+    el.innerHTML = '<span style="font-size:13px;color:#333">← рухай слайдер</span>';
+    return;
+  }
+  if (n > 20) {
+    el.innerHTML = `<span style="font-size:30px">🍔</span><span style="font-size:24px;font-weight:700;color:#efefef;margin-left:8px">× ${n}</span>`;
+    return;
+  }
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement('span');
+    b.className = 'b';
+    b.textContent = '🍔';
+    b.style.animationDelay = (i * 0.025) + 's';
+    el.appendChild(b);
+  }
+}
+
+function renderIntro() {
+  setContent(`
+    <div class="screen">
+      <div class="screen-eyebrow">SKVOT × Кухня</div>
+      <div class="screen-emoji">🍔</div>
+      <div class="screen-title">Тобі прийшло замовлення</div>
+      <div class="screen-sub">Листочок із питанням. Слайдер замість ваг. Відміряй рівно стільки бургерів, скільки правильна відповідь.</div>
+      <button class="primary-btn" onclick="startGame()" style="margin-top:2rem">Взяти замовлення →</button>
+    </div>
+  `);
+}
+
+function startGame() { current = 0; score = 0; renderQuestion(); }
+
+function renderQuestion() {
+  const q = questions[current];
+  const pct = (current / questions.length) * 100;
+  const init = Math.round((q.min + q.max) / 2);
+
+  setContent(`
+    <div class="top-row">
+      <span class="top-label">Замовлення ${current + 1} / ${questions.length}</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+
+    <div class="slip">
+      <div class="slip-header">
+        <span class="slip-tag">Замовлення</span>
+        <span class="slip-num"># ${q.num}</span>
+      </div>
+      <div class="slip-q">${q.order}</div>
+    </div>
+
+    <div class="counter-area">
+      <span class="counter-num" id="cnum">${init}</span>
+      <div class="counter-unit">${q.unit}</div>
+    </div>
+
+    <div class="burger-grid" id="bgrid"></div>
+
+    <div class="slider-wrap">
+      <input type="range" id="slider" min="${q.min}" max="${q.max}" value="${init}">
+      <div class="slider-labels"><span>${q.min}</span><span>${q.max}</span></div>
+    </div>
+
+    <button class="primary-btn" onclick="submitAnswer()">Підтвердити замовлення →</button>
+  `);
+
+  const slider = document.getElementById('slider');
+  const cnum   = document.getElementById('cnum');
+  const bgrid  = document.getElementById('bgrid');
+  renderBurgers(init, bgrid);
+
+  slider.addEventListener('input', () => {
+    const v = parseInt(slider.value);
+    cnum.classList.remove('bump');
+    void cnum.offsetWidth;
+    cnum.classList.add('bump');
+    cnum.textContent = v;
+    renderBurgers(v, bgrid);
+  });
+}
+
+function submitAnswer() {
+  const q = questions[current];
+  const val = parseInt(document.getElementById('slider').value);
+  score += pts(q, val);
+
+  setContent(`
+    <div class="prog-track"><div class="prog-fill" style="width:${((current+1)/questions.length*100)}%"></div></div>
+
+    <div class="result-cols">
+      <div class="r-col">
+        <div class="r-col-label">Твоя відповідь</div>
+        <div class="r-num">${val}</div>
+        <div class="r-burgers">${burgerStr(Math.min(val, 15))}</div>
+      </div>
+      <div class="r-col is-correct">
+        <div class="r-col-label">Правильно</div>
+        <div class="r-num">${q.answer}</div>
+        <div class="r-burgers">${burgerStr(Math.min(q.answer, 15))}</div>
+      </div>
+    </div>
+
+    <div class="verdict-text">${verdict(q, val)}</div>
+    <div class="fact-box">${q.fact}</div>
+
+    <button class="primary-btn" onclick="nextQ()">
+      ${current + 1 < questions.length ? 'Наступне замовлення →' : 'Закрити кухню →'}
+    </button>
+  `);
+}
+
+function nextQ() {
+  current++;
+  current >= questions.length ? renderFinal() : renderQuestion();
+}
+
+function renderFinal() {
+  const max = questions.length * 3;
+  const pct = Math.round(score / max * 100);
+  let title, desc;
+  if (pct >= 80) { title = "Шеф-кухар 👨‍🍳"; desc = "Точність майже ідеальна. Клієнти задоволені, кухня пишається."; }
+  else if (pct >= 50) { title = "Підготовчий кухар 🍳"; desc = "Непогано, але деякі порції пішли не туди. Практика вирішить."; }
+  else { title = "Стажер 🥄"; desc = "Замовлення виконані частково. Але тепер знаєш відповіді — і це головне."; }
+
+  setContent(`
+    <div class="screen">
+      <div class="screen-eyebrow">Результат</div>
+      <div class="screen-emoji">🍽</div>
+      <div class="screen-title">Кухня закрита!</div>
+      <div class="score-card">
+        <div class="score-big">${score}<span style="font-size:28px;opacity:.4"> / ${max}</span></div>
+        <div class="score-sub">балів точності</div>
+        <div class="score-title">${title}</div>
+        <div class="score-desc">${desc}</div>
+      </div>
+      <button class="primary-btn" onclick="startGame()">Нова зміна →</button>
+    </div>
+  `);
+}
+
+renderIntro();
+</script>
+</body>
+</html>
